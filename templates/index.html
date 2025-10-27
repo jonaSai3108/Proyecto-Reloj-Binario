@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Proyecto — Sistemas de Numeración (Binario)</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { primary: '#0ea5a4' },
+            keyframes: {
+              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+              slideUp: { '0%': { transform: 'translateY(8px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+            },
+            animation: { fadeIn: 'fadeIn 500ms ease-out both', slideUp: 'slideUp 400ms cubic-bezier(.2,.8,.2,1) both' }
+          }
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body class="bg-gray-50 text-gray-800 antialiased">
+
+    <!-- Navbar fijo -->
+    <nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur z-40 shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-8 w-8 rounded-full bg-primary"></div>
+          <span class="font-semibold">Reloj Binario</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button id="nav-home" class="text-sm text-gray-700 hover:text-primary">Inicio</button>
+          <button id="nav-ops" class="text-sm text-gray-700 hover:text-primary">Operaciones</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="pt-20">
+      <!-- HERO: pantalla principal con la hora grande -->
+      <section id="screen-home" class="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-slate-50">
+        <div class="max-w-4xl w-full px-6">
+          <div class="bg-white rounded-2xl shadow-xl p-10 text-center animate-fadeIn">
+            <h1 class="text-4xl sm:text-5xl font-extrabold mb-4">Hora actual</h1>
+            <p class="text-sm text-gray-500 mb-6">Visualización en diferentes sistemas de numeración</p>
+
+            <div class="mb-8">
+              <div id="hero-time" class="text-6xl sm:text-7xl font-mono font-semibold text-gray-900">--:--:--</div>
+              <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-600">
+                <div class="flex items-center justify-center"><span class="font-medium">Decimal:</span>&nbsp;<span id="dec-time">--:--:--</span></div>
+                <div class="flex items-center justify-center"><span class="font-medium">Binario:</span>&nbsp;<span id="bin-time">--:--:--</span></div>
+                <div class="flex items-center justify-center"><span class="font-medium">Hex:</span>&nbsp;<span id="hex-time">--:--:--</span></div>
+              </div>
+            </div>
+
+            <!-- Botón de navegación a operaciones eliminado por petición del usuario -->
+          </div>
+        </div>
+      </section>
+
+      <!-- PANTALLA DE OPERACIONES: inicialmente oculta, se muestra al navegar -->
+      <section id="screen-ops" class="hidden min-h-screen flex items-start justify-center py-12">
+        <div class="max-w-4xl w-full px-6">
+          <div class="bg-white rounded-2xl shadow-xl p-8 animate-slideUp">
+            <h2 class="text-2xl font-semibold mb-4">Operaciones con la hora (en binario)</h2>
+            <form id="op-form" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end" onsubmit="return false;">
+              <label class="flex flex-col">
+                <span class="text-sm text-gray-600 mb-1">Horas (binario)</span>
+                <input id="hours-bin" type="text" placeholder="ej. 0010" class="px-3 py-2 border rounded-lg font-mono" />
+              </label>
+
+              <label class="flex flex-col">
+                <span class="text-sm text-gray-600 mb-1">Minutos (binario)</span>
+                <input id="minutes-bin" type="text" placeholder="ej. 001100" class="px-3 py-2 border rounded-lg font-mono" />
+              </label>
+
+              <div class="flex items-center gap-3">
+                <div class="flex-1">
+                  <label class="block text-sm text-gray-600 mb-1">Formato de salida</label>
+                  <select id="format-24" class="w-full px-3 py-2 border rounded-lg">
+                    <option value="true">24 horas</option>
+                    <option value="false">12 horas</option>
+                  </select>
+                </div>
+                <div class="flex gap-2">
+                  <button id="btn-add" class="px-4 py-2 bg-primary text-white rounded-lg">Sumar</button>
+                  <button id="btn-sub" class="px-4 py-2 bg-white border rounded-lg">Restar</button>
+                </div>
+              </div>
+            </form>
+
+            <div id="result" class="result-block mt-6 bg-slate-50 p-4 rounded-lg shadow-sm">
+              <h3 class="text-lg font-semibold mb-2">Resultado</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="flex items-center gap-3"><strong class="w-40 text-gray-600">Mostrar (selección):</strong> <span id="display-result" class="font-mono">--:--:--</span></div>
+                <div class="flex items-center gap-3"><strong class="w-40 text-gray-600">Decimal:</strong> <span id="res-dec" class="font-mono">-</span></div>
+                <div class="flex items-center gap-3"><strong class="w-40 text-gray-600">Binario:</strong> <span id="res-bin" class="font-mono">-</span></div>
+                <div class="flex items-center gap-3"><strong class="w-40 text-gray-600">Octal:</strong> <span id="res-oct" class="font-mono">-</span></div>
+                <div class="flex items-center gap-3"><strong class="w-40 text-gray-600">Hex:</strong> <span id="res-hex" class="font-mono">-</span></div>
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <button id="back-home" class="text-sm text-gray-600 hover:text-primary">Volver al inicio</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+  </body>
+</html>
