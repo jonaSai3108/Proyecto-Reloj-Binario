@@ -29,3 +29,6 @@ input { padding: 6px; margin-left: 8px; }
 button { padding: 8px 12px; margin-right: 8px; cursor: pointer; }
 
 footer { margin-top: 16px; text-align: center; color: #666; }
+.font-mono {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}

@@ -1,100 +1,145 @@
-// funcion fetchTime se encarga de obtener la hora actual en diferentes formatos desde el servidor y actualizar el contenido HTML correspondiente.
-async function fetchTime() {
-    try{
+// --- CONFIGURACIÓN DE TAILWIND INTEGRADA ---
+// La configuración de Tailwind se mueve aquí para reducir el número de archivos.
+tailwind.config = {
+  theme: {
+    extend: {
+      // Se define la paleta de colores para el diseño formal
+      colors: { 
+          primary: '#0ea5a4',      // Teal claro (se mantiene para contraste)
+          'accent-dark': '#2f5c5d', // El nuevo color oscuro
+          secondary1: '#1e40af',   // Azul oscuro para Horas
+          secondary2: '#7c3aed',   // Violeta para Minutos
+          secondary3: '#b91c1c'    // Rojo oscuro para Segundos
+      },
+      keyframes: {
+        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        slideUp: { '0%': { transform: 'translateY(8px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+      },
+      animation: { fadeIn: 'fadeIn 500ms ease-out both', slideUp: 'slideUp 400ms cubic-bezier(.2,.8,.2,1) both' }
+    }
+  }
+};
+// --- FIN DE CONFIGURACIÓN DE TAILWIND ---
+
+
+// VARIABLES GLOBALES
+const screens = {
+    home: document.getElementById('screen-home'),
+    ops: document.getElementById('screen-ops')
+};
+
+const navButtons = {
+    home: document.getElementById('nav-home'),
+    ops: document.getElementById('nav-ops')
+};
+
+const heroTime = document.getElementById('hero-time');
+
+// Actualizar los elementos de la hora principal
+const updateClockElements = (data) => {
+    // Bases individuales
+    document.getElementById('binary-hours-text').textContent = data.binario.h.padStart(5, '0');
+    document.getElementById('binary-minutes-text').textContent = data.binario.m.padStart(6, '0');
+    document.getElementById('binary-seconds-text').textContent = data.binario.s.padStart(6, '0');
+
+    // Bases concatenadas
+    document.getElementById('dec-time').textContent = `${data.decimal.h}:${data.decimal.m}:${data.decimal.s}`;
+    document.getElementById('bin-time').textContent = `${data.binario.h}:${data.binario.m}:${data.binario.s}`;
+    document.getElementById('oct-time').textContent = `${data.octal.h}:${data.octal.m}:${data.octal.s}`;
+    document.getElementById('hex-time').textContent = `${data.hexadecimal.h}:${data.hexadecimal.m}:${data.hexadecimal.s}`;
+};
+
+// 1. Obtiene la hora del backend y actualiza el DOM.
+const fetchTime = async () => {
+    try {
         const response = await fetch('/api/tiempo');
         const data = await response.json();
-        const decimal = data.decimal;
-        const binario = data.binario;
-        const hexadecimal = data.hexadecimal;
-        const octal = data.octal; 
+        
+        // Formato HH:MM:SS
+        const formattedTime = `${data.decimal.h.padStart(2, '0')}:${data.decimal.m.padStart(2, '0')}:${data.decimal.s.padStart(2, '0')}`;
+        
+        heroTime.textContent = formattedTime;
+        updateClockElements(data);
 
-  // Los IDs en el HTML son: dec-time, bin-time, oct-time, hex-time
-  const decEl = document.getElementById('dec-time');
-  const binEl = document.getElementById('bin-time');
-  const octEl = document.getElementById('oct-time');
-  const hexEl = document.getElementById('hex-time');
-
-  if (decEl) decEl.innerText = `${String(decimal.h).padStart(2,'0')}: ${String(decimal.m).padStart(2,'0')}: ${String(decimal.s).padStart(2,'0')}`;
-  // actualizar hero (hora grande) si existe
-  const heroEl = document.getElementById('hero-time');
-  if (heroEl) heroEl.innerText = `${String(decimal.h).padStart(2,'0')}:${String(decimal.m).padStart(2,'0')}:${String(decimal.s).padStart(2,'0')}`;
-  if (binEl) binEl.innerText = `${binario.h}: ${binario.m}: ${binario.s}`;
-  if (hexEl) hexEl.innerText = `${hexadecimal.h}: ${hexadecimal.m}: ${hexadecimal.s}`;
-  if (octEl) octEl.innerText = `${octal.h}: ${octal.m}: ${octal.s}`;
     } catch (error) {
-        console.error('Error fetching time data:', error);
+        console.error('Error fetching time:', error);
+        heroTime.textContent = 'Error';
     }
-}
-
-async function compute(op) {
-  const hours_bin = document.getElementById('hours-bin').value.trim() || '0';
-  const minutes_bin = document.getElementById('minutes-bin').value.trim() || '0';
-  const format24 = document.getElementById('format-24').value === 'true';
-
-  // mapear operaciones a los valores que espera backend
-  const operacion = op === 'add' ? 'sumar' : 'restar';
-
-  const resp = await fetch('/api/calcular', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      operacion: operacion,
-      horas_binario: hours_bin,
-      minutos_binario: minutes_bin,
-      formato_24: format24
-    })
-  });
-  const data = await resp.json();
-  if (data.error) {
-    alert('Error: ' + data.error);
-    return;
-  }
-  // Actualizar el resultado en el HTML
-  document.getElementById('display-result').innerText = data.formatted?.display || '';
-  document.getElementById('res-dec').innerText = `${data.resultado_decimal.h}:${data.resultado_decimal.m}:${data.resultado_decimal.s}`;
-  document.getElementById('res-bin').innerText = `${data.resultado_binario.h}:${data.resultado_binario.m}:${data.resultado_binario.s}`;
-  document.getElementById('res-oct').innerText = `${data.resultado_octal.h}:${data.resultado_octal.m}:${data.resultado_octal.s}`;
-  document.getElementById('res-hex').innerText = `${data.resultado_hexadecimal.h}:${data.resultado_hexadecimal.m}:${data.resultado_hexadecimal.s}`;
-}
+};
 
 
-// Actualizar la hora cada segundo
-fetchTime();
-setInterval(fetchTime, 1000);
+// 2. Manejo de la navegación entre pantallas (Home / Operaciones)
+const navigateTo = (targetScreen) => {
+    if (targetScreen === 'home') {
+        screens.home.classList.remove('hidden');
+        screens.ops.classList.add('hidden');
+    } else {
+        screens.home.classList.add('hidden');
+        screens.ops.classList.remove('hidden');
+    }
+};
 
-// Conectar botones 'Sumar' y 'Restar' a la función compute
-const btnAdd = document.getElementById('btn-add');
-const btnSub = document.getElementById('btn-sub');
-if (btnAdd) btnAdd.addEventListener('click', (e) => { e.preventDefault(); compute('add'); });
-if (btnSub) btnSub.addEventListener('click', (e) => { e.preventDefault(); compute('sub'); });
+navButtons.home.addEventListener('click', () => navigateTo('home'));
+navButtons.ops.addEventListener('click', () => navigateTo('ops'));
+document.getElementById('go-ops').addEventListener('click', () => navigateTo('ops'));
+document.getElementById('back-home').addEventListener('click', () => navigateTo('home'));
 
-// Navegación entre pantallas (SPA): mostrar/ocultar secciones
-function showScreen(screenId) {
-  const home = document.getElementById('screen-home');
-  const ops = document.getElementById('screen-ops');
-  if (!home || !ops) return;
-  if (screenId === 'home') {
-    home.classList.remove('hidden');
-    ops.classList.add('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else if (screenId === 'ops') {
-    ops.classList.remove('hidden');
-    home.classList.add('hidden');
-    // focus al formulario
-    setTimeout(() => { const h = document.getElementById('hours-bin'); if (h) h.focus(); }, 250);
-  }
-}
 
-// listeners del navbar
-const navHome = document.getElementById('nav-home');
-const navOps = document.getElementById('nav-ops');
-const goOps = document.getElementById('go-ops');
-const backHome = document.getElementById('back-home');
-if (navHome) navHome.addEventListener('click', () => showScreen('home'));
-if (navOps) navOps.addEventListener('click', () => showScreen('ops'));
-if (goOps) goOps.addEventListener('click', () => showScreen('ops'));
-if (backHome) backHome.addEventListener('click', () => showScreen('home'));
+// 3. Manejo de la operación Sumar/Restar
+const handleCalculation = async (operation) => {
+    const horasBinario = document.getElementById('hours-bin').value || '0';
+    const minutosBinario = document.getElementById('minutes-bin').value || '0';
+    const formato24 = document.getElementById('format-24').value === 'true';
 
-// mostrar pantalla inicial por defecto
-document.addEventListener('DOMContentLoaded', () => { showScreen('home'); });
+    // Validación simple de binario (solo 0s y 1s)
+    const binRegex = /^[01]*$/;
+    if (!binRegex.test(horasBinario) || !binRegex.test(minutosBinario)) {
+        alert('Por favor, ingresa solo 0s y 1s en los campos binarios.');
+        return;
+    }
 
+    try {
+        const response = await fetch('/api/calcular', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                operacion: operation,
+                horas_binario: horasBinario,
+                minutos_binario: minutosBinario,
+                formato_24: formato24
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Actualizar la sección de resultados
+            document.getElementById('display-result').textContent = result.formatted.display;
+            document.getElementById('res-dec').textContent = `${result.resultado_decimal.h.padStart(2, '0')}:${result.resultado_decimal.m.padStart(2, '0')}:${result.resultado_decimal.s.padStart(2, '0')}`;
+            document.getElementById('res-bin').textContent = `${result.resultado_binario.h}:${result.resultado_binario.m}:${result.resultado_binario.s}`;
+            document.getElementById('res-oct').textContent = `${result.resultado_octal.h}:${result.resultado_octal.m}:${result.resultado_octal.s}`;
+            document.getElementById('res-hex').textContent = `${result.resultado_hexadecimal.h}:${result.resultado_hexadecimal.m}:${result.resultado_hexadecimal.s}`;
+        } else {
+            // Manejo de errores del servidor (ej: entrada binaria inválida)
+            document.getElementById('display-result').textContent = 'Error';
+            console.error('Error del servidor:', result.error);
+            alert(`Error de cálculo: ${result.error}`);
+        }
+
+    } catch (error) {
+        console.error('Error al enviar la solicitud de cálculo:', error);
+        alert('Ocurrió un error al intentar comunicarse con el servidor.');
+    }
+};
+
+// Asignar eventos a los botones de sumar/restar
+document.getElementById('btn-add').addEventListener('click', () => handleCalculation('sumar'));
+document.getElementById('btn-sub').addEventListener('click', () => handleCalculation('restar'));
+
+// Iniciar el reloj y configurar el intervalo
+window.onload = function() {
+    fetchTime();
+    setInterval(fetchTime, 1000);
+};
