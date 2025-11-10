@@ -43,7 +43,7 @@ def api_calcular():
     now = datetime.now()
     h0, m0, s0 = now.hour, now.minute, now.second 
 
-    #Convertir inputs binarios a decimal usando la funcion binario_a_decimal
+    #Convertir inputs binarios a decimal usando la clase binario_a_decimal
     try:
        add_horas = binario_a_decimal(horas_binario)
        add_minutos = binario_a_decimal(minutos_binario)
@@ -88,8 +88,9 @@ def api_calcular():
 
         #Ahora ajustamos la hora
        h0_decimal = h0
-       h_diferencia_decimal = (h0_decimal - hora_prestada) % 24
-       #convertir a binario
+       # Restar las horas solicitadas y la hora prestada (si hubo) y normalizar a 24h
+       h_diferencia_decimal = (h0_decimal - add_horas - hora_prestada) % 24
+       # Preparar valores finales
        new_m_decimal = m_diferencia_decimal
        new_h_decimal = h_diferencia_decimal
        new_m_binario = decimal_a_binario(new_m_decimal)
